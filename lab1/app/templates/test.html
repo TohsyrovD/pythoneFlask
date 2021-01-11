@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- загрузка заголовка -->
+<h1 >{{post.title}}</h1>
+<!-- загрузка имени автора и даты публикации -->
+<h3>{{post.author}},{{ post.date.strftime('%d.%m.%Y') }}</h3>
+<img class="card-img-top" src="{{ url_for('static', filename='images/' ~ post.image_filename) }}" alt="Card image cap">
+<p>{{post.text}}</p>
+<form>
+    <div class="form-group">
+      <label for="comment">Your Comment</label>
+      <textarea name="comment" class="form-control" rows="3"></textarea>
+    </div>
+    <button type="submit" class="btn btn-default">Send</button>
+</form>
+
+<!-- цикл фор -пока все комменты не выведутся  -->
+{% for comment in post.comments %}
+<div class="media">
+    <img class="mr-3" src="{{ url_for('static', filename='images/' ~ '/home/std/web-2020-1/labFlask/lab1/app/static/images/avatar.jpg' ) }}"  width="30" alt="Generic placeholder image">
+    <div class="media-body">
+      <h5 class="mt-0">{{comment.author}}</h5>
+      {{comment.text}}
+    {% for i in comment.replies %}
+      <div class="media mt-3">
+        <a class="pr-3" href="#">
+          <img src="{{ url_for('static', filename='images/' ~ '/home/std/web-2020-1/labFlask/lab1/app/static/images/avatar.jpg') }}" width="30" alt="Generic placeholder image">
+        </a>
+
+        <div class="media-body">
+          <h5 class="mt-0">{{i.author}}</h5>
+          {{i.text}}
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+
+{% endfor %}
+
+{% endblock %}

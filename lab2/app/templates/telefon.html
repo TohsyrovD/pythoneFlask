@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h5 class="my-5">Параметры формы</h5>
+
+<form  method="POST" >
+ <div class="form-group">
+        <label for="Tel">Телефон</label>
+        <input type="text" id="Tel" name="Tel" class="form-control {% if error %} is-invalid {% endif %}" placeholder="Телефон" value="{{ request.form.get('Tel', '') }}">
+        <div class="invalid-feedback">
+                {{ error }}
+        </div>
+  </div>  
+        <button class="btn btn-primary" type="submit">Отправить</button>
+</form>
+        {% if result %}
+        <input type="text" id="Tel" name="Tel" class="form-control  " value="{{ result }}" disabled>
+        {% endif %}
+
+{% endblock %}

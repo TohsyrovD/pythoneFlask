@@ -1,0 +1,1 @@
+SECRET_KEY = b'\x1fc%\x17\xcfdSey\x8av\xb8O8\xe3\x89'
