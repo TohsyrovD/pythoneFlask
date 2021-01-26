@@ -17,6 +17,8 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=sa.sql.func.now())
     role_id = db.Column(db.Integer, db.ForeignKey('roles4.id'))
+ 
+    reviews = db.relationship('Review', backref='user')
 
     def __repr__(self):
         return '<User %r>' % self.login
@@ -25,9 +27,11 @@ class User(db.Model, UserMixin):
     def full_name(self):
         return ' '.join([self.last_name, self.first_name, self.middle_name or ''])
 
+    # установка пароля
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
+    # проверка пароля
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
@@ -95,6 +99,8 @@ class Course(db.Model):
     themes = db.relationship('Theme', backref='course')
     author = db.relationship('User')
 
+    reviews = db.relationship('Review', backref='course')
+
     def __repr__(self):
         return '<Course %r>' % self.name
 
@@ -136,7 +142,14 @@ class Page(db.Model):
     def html(self):
         return markdown.markdown(self.text)
 
-
+class Review(db.Model):
+    tablename = 'reviews'
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer, nullable=False)
+    text = db.Column(db.Text(), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=sa.sql.func.now())
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users4.id'))
 
 
 

@@ -1,9 +1,9 @@
 import os
 import bleach
 from flask import Blueprint, render_template, redirect, url_for, request, current_app, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from tools import Navigator, ImageSaver, CoursesFilter
-from models import Course, Category, Image, Theme, User, Step, Page
+from models import Course, Category, Image, Theme, User, Step, Page, Review
 
 from app import db
 
@@ -69,11 +69,17 @@ def create():
     flash(f'Курс {course.name} был успешно создан!', 'success')
 
     return redirect(url_for('courses.index'))
-
+# добавление всего пяти последний рейтингов, но не рейтинг пользователя который смортрит 
 @bp.route('/<int:course_id>')
 def show(course_id):
     course = Course.query.get(course_id)
-    return render_template('courses/show.html', course=course)
+    if current_user.is_authenticated:
+        u_top = db.session.query( Review, User).filter(Review.user_id == current_user.id, Review.course_id == course_id, Review.user_id == User.id).one_or_none()
+        top = db.session.query( Review, User).filter(Review.course_id == course_id, Review.user_id == User.id, Review.user_id != current_user.id).order_by(Review.created_at.desc()).limit(5)
+    else:
+        top = db.session.query( Review, User).filter(Review.course_id == course_id, Review.user_id == User.id).order_by(Review.created_at.desc()).limit(5)
+        u_top = None
+    return render_template('courses/show.html', course=course, top = top, u_top = u_top)
 
 @bp.route('/<int:course_id>/themes/create', methods=['POST'])
 @login_required
@@ -149,3 +155,50 @@ def show_content(course_id, theme_id=None):
         theme=theme, 
         navigator=navigator,
     )
+
+
+@bp.route('/<int:course_id>/reviews')
+def reviews(course_id):
+    top = db.session.query( Review, User).filter(Review.course_id == course_id, Review.user_id == User.id)
+    if not current_user.is_authenticated:
+        u_top = None
+    elif db.session.query( Review, User).filter(Review.user_id == current_user.id, Review.course_id == course_id, Review.user_id == User.id).one_or_none() is None:
+        u_top= None
+    else:
+        u_top = True
+    order = request.args.get('order', 1, type=int)
+    if order == 1:
+        top = top.order_by(Review.created_at.desc())
+    elif order == 2:
+        top = top.order_by(Review.rating.desc())
+    else:
+        top = top.order_by(Review.rating)
+    page = request.args.get('page', 1, type=int)
+    pagination = top.paginate(page, PER_PAGE)
+    top = pagination.items
+    return render_template(
+        'courses/reviews.html',
+        top=top,
+        pagination=pagination,
+        search_params={
+        'course_id': course_id,
+        'order': order,
+        'u_top': u_top
+    }
+    )
+
+@bp.route('/review', methods=['POST'])
+@login_required
+def review():
+    course_id = request.args.get('course_id', type=int)
+    rating = request.form.get('rating') 
+    text = request.form.get('text')
+    user_id = request.args.get('user_id', type=int)
+    flash('Комментарий был успешно создан!', 'success')
+    new_review = Review(rating = rating, text = text, course_id = course_id, user_id = user_id)
+    course = Course.query.get(course_id)
+    course.rating_sum = int(course.rating_sum) + int(rating)
+    course.rating_num = int(course.rating_num) + 1
+    db.session.add(new_review)
+    db.session.commit()
+    return redirect(url_for('courses.show', course_id = course_id))

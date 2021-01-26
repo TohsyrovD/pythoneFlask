@@ -20,9 +20,11 @@ def convert_to_csv(records):
     return result
 
 def generate_report(records):
+    # создаем буфер для временного хранения 
     buffer = io.BytesIO()
+    # записываем сгенирированные данные (возвращает данные в виде строки файла csv ( encode- превращает строку в последовательность байт))
     buffer.write(convert_to_csv(records).encode())
-    # считаывание с начала из файла ( считывание второй раз)
+    # считаывание с начала из файла ( для повторного считывания)
     buffer.seek(0)
     return buffer
     
@@ -70,10 +72,14 @@ def users_stat():
     cursor.execute(query)
     records = cursor.fetchall()
     cursor.close()
+    
+    # если в запросе был перелан аргумент '...', тогда вместо страницы отправляем пользователю отчет csv
     if request.args.get('download_csv'):
+        # 
         f = generate_report(records)
+        #формируем название файлаы
         filename = datetime.datetime.now().strftime('%d_%m_%Y_%H_%M_%S') + '_users_stat.csv'
-    #для скачивания предлагаемого файла
+    #для скачивания предлагаемого файла, as_attachment=True- позволяет скачсать файл на устройство.
         return send_file(f, as_attachment=True, attachment_filename=filename, mimetype='text/csv')
     return render_template('visits/users.html', records=records)
 

@@ -34,6 +34,7 @@ app.register_blueprint(api_bp)
 
 @app.route('/')
 def index():
+    # список категорий на главной странице
     categories = Category.query.all()
     courses = Course.query.order_by((Course.rating_sum/Course.rating_num)
                           .desc()).limit(6).all()

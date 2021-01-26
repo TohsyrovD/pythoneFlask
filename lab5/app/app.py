@@ -24,8 +24,10 @@ def save_visit_info():
     user_id = getattr(current_user, 'id', None)
     # path -путь до текущей страницы, user_id - идентификатор текущего пользователя( если есть )
     query='INSERT INTO visit_logs (path, user_id) VALUES (%s, %s);'
+    # 
     with mysql.connection.cursor(named_tuple=True) as cursor:
         try:
+            # для отлавливания ошибок 
             cursor.execute(query, (request.path, user_id))
             # коммитим транзакцию
             mysql.connection.commit()
@@ -58,6 +60,7 @@ def new():
     return render_template('users/new.html', user={}, roles=load_roles())
 
 @app.route('/users/<int:user_id>')
+# проверка на аунтификацию пользователя 
 @check_rights('show')
 @login_required
 def show(user_id):
